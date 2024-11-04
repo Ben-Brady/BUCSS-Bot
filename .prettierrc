@@ -1,6 +1,8 @@
 {
-    "trailingComma": "es5",
-    "tabWidth": 4,
-    "semi": false,
-    "singleQuote": false
+  "singleQuote": false,
+  "trailingComma": "all",
+  "arrowParens": "avoid",
+  "experimentalTernaries": false,
+  "tabWidth": 4,
+  "printWidth": 120
 }
