@@ -1,25 +1,41 @@
 import { server, type ApiRoute } from "../api";
 
-export const wsChatRoute: ApiRoute = async (server, req) => {
-    if (server.upgrade(req)) return;
-    return new Response("Upgrade Failed :(", { status: 400 });
+let recentMessages: Message[] = [];
+
+export const recentMessagesRoute: ApiRoute = async (server, req) => {
+    return new Response(JSON.stringify(recentMessages.reverse()), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+    });
 };
 
-export const publishMessage = (message: ImageMessage | ChatMessage) => {
-    if (!server) return;
-    server.publish("chat", JSON.stringify(message));
+const MAX_LENGTH = 50;
+
+export const publishMessage = (message: Message) => {
+    if (recentMessages.length > MAX_LENGTH) {
+        recentMessages = recentMessages.slice(1, 0);
+    }
+    recentMessages.push(message);
 };
 
-type ImageMessage = {
+export type Message = ImageMessage | ChatMessage;
+
+export type ImageMessage = {
     type: "image";
+    imageUrl: string;
+
     id: string;
-    link: string;
+    createdAt: Date;
+    username: string;
+    pfpUrl: string;
 };
 
-type ChatMessage = {
+export type ChatMessage = {
     type: "chat";
+    message: string;
+
     id: string;
-    name: string;
-    text: string;
-    pfp: string;
+    createdAt: Date;
+    username: string;
+    pfpUrl: string;
 };

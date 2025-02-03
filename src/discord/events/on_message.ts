@@ -1,29 +1,22 @@
 import type { EventCallback } from "discopic";
 import { publishMessage } from "../../api/routes/chat";
 
-export const on_message: EventCallback<"on_message"> = async message => {
-    if (message.author.bot) return;
+export const on_message: EventCallback<"on_message"> = async msg => {
+    if (msg.author.bot) return;
 
-    const images = message.attachments.map(attachment => attachment.url);
+    const images = msg.attachments.map(attachment => attachment.url);
+
+    const id = msg.id.toString();
+    const createdAt = msg.createdAt;
+    const username = msg.author.displayName;
+    const pfpUrl = msg.author.avatarURL({ forceStatic: true }) ?? "";
 
     if (images.length === 0) {
-        publishMessage({
-            id: message.id.toString(),
-            type: "chat",
-            text: message.content,
-            name: message.author.displayName,
-            pfp:
-                message.author.avatarURL({
-                    forceStatic: true,
-                }) ?? "",
-        });
+        const message = msg.cleanContent.toString();
+        publishMessage({ type: "chat", id, createdAt, message, username, pfpUrl });
     } else {
-        images.map(link => {
-            publishMessage({
-                id: message.id.toString(),
-                type: "image",
-                link: link,
-            });
-        });
+        for (const image of images) {
+            publishMessage({ type: "image", id, createdAt, pfpUrl, username, imageUrl: image });
+        }
     }
 };

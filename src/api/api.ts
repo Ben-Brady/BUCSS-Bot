@@ -1,13 +1,13 @@
 import type { Server } from "bun";
-import { wsChatRoute } from "./routes/chat";
+import { recentMessagesRoute } from "./routes/chat";
 import { eventRoute } from "./routes/events";
 
 export let server: Server | undefined = undefined;
 
-export type ApiRoute = (server: Server, req: Request) => Promise<void | Response>;
+export type ApiRoute = (server: Server, req: Request) => Promise<Response>;
 
 const routes: Record<string, ApiRoute> = {
-    "/ws/chat": wsChatRoute,
+    "/messages/recent": recentMessagesRoute,
     "/events": eventRoute,
 };
 
@@ -15,17 +15,16 @@ export const startHttpApi = () => {
     server = Bun.serve({
         id: "http",
         port: 3000,
-        fetch(request, server) {
+        async fetch(request, server) {
             const url = new URL(request.url);
             const apiRoute = routes[url.pathname];
             if (!apiRoute) return new Response("Not Found", { status: 404 });
 
-            return apiRoute(server, request);
-        },
-        websocket: {
-            open: ws => ws.subscribe("chat"),
-            close: ws => ws.unsubscribe("chat"),
-            message: ws => ws.close(1000),
+            const response = await apiRoute(server, request);
+            response.headers.set("Access-Control-Allow-Headers", "*");
+            response.headers.set("Access-Control-Allow-Methods", "*");
+            response.headers.set("Access-Control-Allow-Origin", "*");
+            return response;
         },
     });
 
